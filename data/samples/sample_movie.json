@@ -1,0 +1,183 @@
+{
+  "id": 2,
+  "imdb_id": "tt0094675",
+  "title": "Ariel",
+  "original_title": "Ariel",
+  "original_language": "fi",
+  "overview": "A Finnish man goes to the city to find a job after the mine where he worked is closed and his father commits suicide.",
+  "tagline": "",
+  "release_date": "1988-10-21",
+  "status": "Released",
+  "vote_average": 7.102,
+  "vote_count": 367,
+  "popularity": 2.291,
+  "runtime": 73,
+  "budget": 0,
+  "revenue": 0,
+  "adult": false,
+  "genres": [
+    {
+      "id": 35,
+      "name": "Comedy"
+    },
+    {
+      "id": 18,
+      "name": "Drama"
+    },
+    {
+      "id": 10749,
+      "name": "Romance"
+    },
+    {
+      "id": 80,
+      "name": "Crime"
+    }
+  ],
+  "cast": [
+    {
+      "id": 54768,
+      "name": "Turo Pajala",
+      "character": "Taisto Kasurinen",
+      "order": 0
+    },
+    {
+      "id": 54769,
+      "name": "Susanna Haavisto",
+      "character": "Irmeli Pihlaja",
+      "order": 1
+    },
+    {
+      "id": 4826,
+      "name": "Matti Pellonpää",
+      "character": "Mikkonen",
+      "order": 2
+    },
+    {
+      "id": 54770,
+      "name": "Eetu Hilkamo",
+      "character": "Riku",
+      "order": 3
+    },
+    {
+      "id": 1177496,
+      "name": "Erkki Pajala",
+      "character": "Miner",
+      "order": 4
+    },
+    {
+      "id": 2493350,
+      "name": "Matti Jaaranen",
+      "character": "Mugger",
+      "order": 5
+    },
+    {
+      "id": 2509142,
+      "name": "Hannu Viholainen",
+      "character": "Accomplice",
+      "order": 6
+    },
+    {
+      "id": 110757,
+      "name": "Jorma Markkula",
+      "character": "Tallyman",
+      "order": 7
+    },
+    {
+      "id": 1034494,
+      "name": "Tarja Keinänen",
+      "character": "Woman in Harbour",
+      "order": 8
+    },
+    {
+      "id": 2509144,
+      "name": "Eino Kuusela",
+      "character": "Man on Beach",
+      "order": 9
+    },
+    {
+      "id": 1207858,
+      "name": "Kauko Laalo",
+      "character": "Night Hostel Manager",
+      "order": 10
+    },
+    {
+      "id": 2509145,
+      "name": "Jyrki Olsonen",
+      "character": "Man in Night Hostel",
+      "order": 11
+    },
+    {
+      "id": 53508,
+      "name": "Esko Nikkari",
+      "character": "Car Dealer",
+      "order": 12
+    },
+    {
+      "id": 53512,
+      "name": "Marja Packalén",
+      "character": "Judge",
+      "order": 13
+    },
+    {
+      "id": 2509146,
+      "name": "Mikko Remes",
+      "character": "Prison Doctor",
+      "order": 14
+    },
+    {
+      "id": 4829,
+      "name": "Tomi Salmela",
+      "character": "Guard",
+      "order": 15
+    },
+    {
+      "id": 2509147,
+      "name": "Reijo Marin",
+      "character": "Guard",
+      "order": 16
+    },
+    {
+      "id": 2509149,
+      "name": "Heikki Salomaa",
+      "character": "Guard",
+      "order": 17
+    },
+    {
+      "id": 1207842,
+      "name": "Veikko Uusimäki",
+      "character": "Mayor",
+      "order": 18
+    },
+    {
+      "id": 56273,
+      "name": "Esko Salminen",
+      "character": "Crook",
+      "order": 19
+    }
+  ],
+  "crew": [
+    {
+      "id": 16767,
+      "name": "Aki Kaurismäki",
+      "job": "Director",
+      "department": "Directing"
+    },
+    {
+      "id": 16767,
+      "name": "Aki Kaurismäki",
+      "job": "Writer",
+      "department": "Writing"
+    },
+    {
+      "id": 16767,
+      "name": "Aki Kaurismäki",
+      "job": "Producer",
+      "department": "Production"
+    }
+  ],
+  "reviews": [],
+  "poster_path": "/ojDg0PGvs6R9xYFodRct2kdI6wC.jpg",
+  "backdrop_path": "/hQ4pYsIbP22TMXOUdSfC2mjWrO0.jpg",
+  "homepage": "",
+  "crawled_at": "2026-01-24T05:33:39.774832Z"
+}

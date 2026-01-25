@@ -1,0 +1,10 @@
+# TMDB Crawler Dependencies
+
+# Web scraping framework
+scrapy>=2.11.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# Item adapter for pipeline processing
+itemadapter>=0.8.0
