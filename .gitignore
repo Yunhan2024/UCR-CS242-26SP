@@ -16,9 +16,9 @@ logs/
 # Data files (too large for git)
 data/movie_ids.jsonl
 data/movies/
-data/covers/
+data/posters/
 data/crawl_stats.json
-data/cover_stats.json
+data/poster_stats.json
 data/__MACOSX/
 *.zip
 

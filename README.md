@@ -28,6 +28,7 @@ Each movie includes:
 ```
 cs242/
 ├── tmdb_crawler/           # Scrapy crawler
+│   ├── poster_crawler.py   # Async poster image downloader
 │   └── tmdb_crawler/
 │       ├── items.py        # Data models
 │       ├── settings.py     # API config, rate limits
@@ -37,7 +38,8 @@ cs242/
 │           └── details_spider.py   # Phase 2: Fetch details
 ├── data/
 │   ├── movie_ids.jsonl     # Discovered movie IDs
-│   └── movies/             # Full movie JSON files
+│   ├── movies/             # Full movie JSON files
+│   └── posters/            # Movie poster images
 └── requirements.txt
 ```
 
@@ -64,13 +66,17 @@ scrapy crawl discover
 scrapy crawl details -s JOBDIR=crawljob
 ```
 
-### 4. Monitor Progress
+### 4. Download Poster Images
 ```bash
-# Count crawled movies
-find ../data/movies -name "*.json" | wc -l
+cd tmdb_crawler
 
-# Check total size
-du -sh ../data/
+# Download all posters (w500 size by default)
+python poster_crawler.py
+
+# Options
+python poster_crawler.py --size w780        # Larger images
+python poster_crawler.py --concurrency 32   # More concurrent downloads
+python poster_crawler.py --limit 100        # Limit for testing
 ```
 
 ## Data Schema

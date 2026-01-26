@@ -1,11 +1,11 @@
 """
-Cover Crawler - Download movie poster images from TMDB.
+Poster Crawler - Download movie poster images from TMDB.
 
-Reads movie data from data/movies/ and downloads poster images to data/covers/.
+Reads movie data from data/movies/ and downloads poster images to data/posters/.
 Uses asyncio for efficient concurrent downloads with rate limiting.
 
 Usage:
-    python cover_crawler.py [--size SIZE] [--concurrency N] [--limit N]
+    python poster_crawler.py [--size SIZE] [--concurrency N] [--limit N]
 
 Options:
     --size SIZE       Image size: w92, w154, w185, w342, w500, w780, original (default: w500)
@@ -17,10 +17,9 @@ import argparse
 import asyncio
 import json
 import logging
-import os
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 import aiohttp
 from aiohttp import ClientTimeout
@@ -42,12 +41,12 @@ TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p"
 VALID_SIZES = ["w92", "w154", "w185", "w342", "w500", "w780", "original"]
 
 
-class CoverCrawler:
-    """Asynchronous movie cover downloader."""
+class PosterCrawler:
+    """Asynchronous movie poster downloader."""
 
-    def __init__(self, movies_dir: Path, covers_dir: Path, size: str = "w500", concurrency: int = 16):
+    def __init__(self, movies_dir: Path, posters_dir: Path, size: str = "w500", concurrency: int = 16):
         self.movies_dir = movies_dir
-        self.covers_dir = covers_dir
+        self.posters_dir = posters_dir
         self.size = size
         self.concurrency = concurrency
         self.semaphore = None
@@ -88,13 +87,13 @@ class CoverCrawler:
 
         return movies
 
-    def get_cover_path(self, movie_id: int) -> Path:
-        """Get the local file path for a movie cover."""
+    def get_poster_path(self, movie_id: int) -> Path:
+        """Get the local file path for a movie poster."""
         subdir = str(movie_id // 1000)
-        return self.covers_dir / subdir / f"{movie_id}.jpg"
+        return self.posters_dir / subdir / f"{movie_id}.jpg"
 
-    async def download_cover(self, session: aiohttp.ClientSession, movie_id: int, poster_path: str) -> bool:
-        """Download a single movie cover."""
+    async def download_poster(self, session: aiohttp.ClientSession, movie_id: int, poster_path: str) -> bool:
+        """Download a single movie poster."""
         async with self.semaphore:
             # Check if poster_path exists
             if not poster_path:
@@ -102,13 +101,13 @@ class CoverCrawler:
                 return False
 
             # Check if already downloaded
-            cover_path = self.get_cover_path(movie_id)
-            if cover_path.exists():
+            local_path = self.get_poster_path(movie_id)
+            if local_path.exists():
                 self.stats["skipped_existing"] += 1
                 return True
 
             # Create directory if needed
-            cover_path.parent.mkdir(parents=True, exist_ok=True)
+            local_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Build image URL
             url = f"{TMDB_IMAGE_BASE_URL}/{self.size}{poster_path}"
@@ -119,7 +118,7 @@ class CoverCrawler:
                         content = await response.read()
 
                         # Write to file
-                        with open(cover_path, "wb") as f:
+                        with open(local_path, "wb") as f:
                             f.write(content)
 
                         self.stats["downloaded"] += 1
@@ -139,7 +138,7 @@ class CoverCrawler:
                 return False
 
     async def run(self, limit: int = None):
-        """Run the cover crawler."""
+        """Run the poster crawler."""
         logger.info(f"Scanning movies in {self.movies_dir}...")
         movies = self.get_movies_to_download(limit)
         self.stats["total"] = len(movies)
@@ -149,8 +148,8 @@ class CoverCrawler:
             logger.info("No movies to download")
             return
 
-        # Create covers directory
-        self.covers_dir.mkdir(parents=True, exist_ok=True)
+        # Create posters directory
+        self.posters_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize semaphore for rate limiting
         self.semaphore = asyncio.Semaphore(self.concurrency)
@@ -163,7 +162,7 @@ class CoverCrawler:
         async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
             # Create download tasks
             tasks = [
-                self.download_cover(session, movie_id, poster_path)
+                self.download_poster(session, movie_id, poster_path)
                 for movie_id, poster_path in movies
             ]
 
@@ -184,7 +183,7 @@ class CoverCrawler:
 
         # Final statistics
         logger.info("=" * 50)
-        logger.info("Cover download complete!")
+        logger.info("Poster download complete!")
         logger.info(f"  Total movies: {self.stats['total']}")
         logger.info(f"  Downloaded: {self.stats['downloaded']}")
         logger.info(f"  Skipped (existing): {self.stats['skipped_existing']}")
@@ -192,8 +191,8 @@ class CoverCrawler:
         logger.info(f"  Failed: {self.stats['failed']}")
 
         # Save statistics
-        stats_file = self.covers_dir / "cover_stats.json"
-        self.stats["completed_at"] = datetime.utcnow().isoformat() + "Z"
+        stats_file = self.posters_dir / "poster_stats.json"
+        self.stats["completed_at"] = datetime.now(timezone.utc).isoformat()
         self.stats["image_size"] = self.size
         with open(stats_file, "w") as f:
             json.dump(self.stats, f, indent=2)
@@ -201,7 +200,7 @@ class CoverCrawler:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Download movie poster covers from TMDB")
+    parser = argparse.ArgumentParser(description="Download movie poster images from TMDB")
     parser.add_argument(
         "--size",
         choices=VALID_SIZES,
@@ -227,10 +226,10 @@ def main():
         help="Path to movies data directory"
     )
     parser.add_argument(
-        "--covers-dir",
+        "--posters-dir",
         type=str,
-        default="../data/covers",
-        help="Path to output covers directory"
+        default="../data/posters",
+        help="Path to output posters directory"
     )
 
     args = parser.parse_args()
@@ -238,28 +237,28 @@ def main():
     # Resolve paths relative to script location
     script_dir = Path(__file__).parent
     movies_dir = Path(args.movies_dir)
-    covers_dir = Path(args.covers_dir)
+    posters_dir = Path(args.posters_dir)
 
     if not movies_dir.is_absolute():
         movies_dir = script_dir / movies_dir
-    if not covers_dir.is_absolute():
-        covers_dir = script_dir / covers_dir
+    if not posters_dir.is_absolute():
+        posters_dir = script_dir / posters_dir
 
     # Validate movies directory exists
     if not movies_dir.exists():
         logger.error(f"Movies directory not found: {movies_dir}")
         sys.exit(1)
 
-    logger.info(f"Cover Crawler starting...")
+    logger.info("Poster Crawler starting...")
     logger.info(f"  Movies dir: {movies_dir}")
-    logger.info(f"  Covers dir: {covers_dir}")
+    logger.info(f"  Posters dir: {posters_dir}")
     logger.info(f"  Image size: {args.size}")
     logger.info(f"  Concurrency: {args.concurrency}")
 
     # Run crawler
-    crawler = CoverCrawler(
+    crawler = PosterCrawler(
         movies_dir=movies_dir,
-        covers_dir=covers_dir,
+        posters_dir=posters_dir,
         size=args.size,
         concurrency=args.concurrency
     )
