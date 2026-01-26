@@ -16,7 +16,11 @@ logs/
 # Data files (too large for git)
 data/movie_ids.jsonl
 data/movies/
+data/covers/
 data/crawl_stats.json
+data/cover_stats.json
+data/__MACOSX/
+*.zip
 
 # Keep sample data
 !data/samples/
