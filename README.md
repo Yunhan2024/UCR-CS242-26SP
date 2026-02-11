@@ -13,33 +13,35 @@ This project builds a search engine using data crawled from TMDB (The Movie Data
 
 | Metric | Value |
 |--------|-------|
-| Movies | 45,828 |
-| Total Size | 425 MB |
+| Movies | 220,243 |
+| Total Size | 652 MB |
 
-Each movie includes:
-- Title, overview, tagline
-- Release date, runtime, genres
-- Cast and crew (top 20 actors, directors/writers/producers)
-- User reviews (up to 10 per movie)
-- Ratings and popularity scores
+Each movie record includes: title, overview, tagline, release date, runtime, genres, cast (top 20), crew (directors/writers/producers), user reviews (up to 10), ratings, popularity, budget, revenue, and more.
+
+## Crawler Features
+
+- **Two-phase architecture**: Phase 1 discovers movie IDs, Phase 2 fetches full details
+- **Multi-strategy discovery**: Genre-based (19 genres), year-based (1970-2026), language-based (10 languages), vote count ranges — collects 220k+ unique IDs
+- **Concurrent requests**: 16 parallel requests with auto-throttle for adaptive rate limiting
+- **Duplicate handling**: In-memory deduplication during discovery + DuplicateFilterPipeline for details
+- **Resumable crawling**: Skips already-downloaded files, safe to interrupt with Ctrl+C and resume later
+- **Auto-retry**: Retries on 5xx and 429 errors (up to 3 times)
 
 ## Project Structure
 
 ```
 cs242/
-├── tmdb_crawler/           # Scrapy crawler
-│   ├── poster_crawler.py   # Async poster image downloader
+├── tmdb_crawler/
 │   └── tmdb_crawler/
 │       ├── items.py        # Data models
-│       ├── settings.py     # API config, rate limits
-│       ├── pipelines.py    # JSON storage
+│       ├── settings.py     # API config, rate limits, pipelines
+│       ├── pipelines.py    # Dedup filter, JSON storage, stats
 │       └── spiders/
-│           ├── discover_spider.py  # Phase 1: Collect IDs
-│           └── details_spider.py   # Phase 2: Fetch details
+│           ├── discover_spider.py  # Phase 1: Collect movie IDs
+│           └── details_spider.py   # Phase 2: Fetch full details
 ├── data/
 │   ├── movie_ids.jsonl     # Discovered movie IDs
-│   ├── movies/             # Full movie JSON files
-│   └── posters/            # Movie poster images
+│   └── movies/             # Individual movie JSON files
 └── requirements.txt
 ```
 
@@ -47,41 +49,32 @@ cs242/
 
 ### 1. Install Dependencies
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+.\venv\Scripts\activate   # Windows
 pip install -r requirements.txt
 ```
 
 ### 2. Set TMDB API Key
-Get a free API key from https://www.themoviedb.org/settings/api
+```bash
+export TMDB_API_KEY="your-api-key"          # Linux/Mac
+$env:TMDB_API_KEY="your-api-key"            # Windows PowerShell
+```
+Get a free key at https://www.themoviedb.org/settings/api
 
 ### 3. Run Crawler
 ```bash
 cd tmdb_crawler
 
-# Phase 1: Discover movie IDs
+# Phase 1: Discover movie IDs (writes to data/movie_ids.jsonl)
 scrapy crawl discover
 
-# Phase 2: Fetch full details
-scrapy crawl details -s JOBDIR=crawljob
-```
-
-### 4. Download Poster Images
-```bash
-cd tmdb_crawler
-
-# Download all posters (w500 size by default)
-python poster_crawler.py
-
-# Options
-python poster_crawler.py --size w780        # Larger images
-python poster_crawler.py --concurrency 32   # More concurrent downloads
-python poster_crawler.py --limit 100        # Limit for testing
+# Phase 2: Fetch full movie details (writes to data/movies/*.json)
+scrapy crawl details -s LOG_FILE=../logs/crawler.log
 ```
 
 ## Data Schema
 
-Sample movie JSON structure:
 ```json
 {
   "id": 550,
@@ -90,9 +83,13 @@ Sample movie JSON structure:
   "release_date": "1999-10-15",
   "genres": [{"id": 18, "name": "Drama"}],
   "vote_average": 8.4,
+  "runtime": 139,
+  "budget": 63000000,
+  "revenue": 100853753,
   "cast": [{"name": "Brad Pitt", "character": "Tyler Durden"}],
   "crew": [{"name": "David Fincher", "job": "Director"}],
-  "reviews": [{"author": "user", "content": "Great film..."}]
+  "reviews": [{"author": "user", "content": "Great film...", "rating": 9}],
+  "review_count": 1
 }
 ```
 

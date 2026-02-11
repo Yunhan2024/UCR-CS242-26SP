@@ -44,7 +44,8 @@ class MovieItem(scrapy.Item):
     crew = scrapy.Field()  # List of {id, name, job, department}
 
     # User content
-    reviews = scrapy.Field()  # List of {id, author, content, rating, created_at}
+    reviews = scrapy.Field()  # List of {id, author, content, rating, created_at}, max 10
+    review_count = scrapy.Field()  # Number of reviews fetched (0 if none)
 
     # Media paths
     poster_path = scrapy.Field()

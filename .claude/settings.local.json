@@ -7,7 +7,14 @@
       "Bash(./venv/Scripts/pip.exe install:*)",
       "Bash(../venv/Scripts/python.exe:*)",
       "Bash(file:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(.venvScriptspython.exe -m scrapy crawl details -s CLOSESPIDER_ITEMCOUNT=10 -s LOG_FILE=\"\")",
+      "Bash(/c/Users/21065/course/cs242/UCR-CS242-26SP/venv/Scripts/python.exe -m scrapy crawl:*)",
+      "Bash(TMDB_API_KEY=f20f2547dbea391b376de60544126875 /c/Users/21065/course/cs242/UCR-CS242-26SP/venv/Scripts/python.exe -m scrapy crawl:*)",
+      "WebFetch(domain:api.themoviedb.org)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\21065\\course\\cs242\\UCR-CS242-26SP\\tmdb_crawler"
     ]
   }
 }

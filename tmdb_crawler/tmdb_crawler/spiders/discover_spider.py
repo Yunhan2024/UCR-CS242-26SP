@@ -1,8 +1,11 @@
 """
 Discover Spider - Phase 1
 
-Collects movie IDs from TMDB's discover endpoint.
-Uses multiple strategies to overcome the 500-page limit and collect 50,000+ unique movies.
+Collects 200,000+ unique movie IDs from TMDB using multiple strategies:
+1. Genre-based filtering (19 genres)
+2. Year-based filtering (1970-2026)
+3. Vote count ranges (to reduce overlap)
+4. Language-based filtering (10 major languages)
 """
 
 import json
@@ -15,27 +18,30 @@ class DiscoverSpider(scrapy.Spider):
     name = "discover"
     allowed_domains = ["api.themoviedb.org"]
 
-    # Discovery strategies to get more than 10,000 movies
-    SORT_OPTIONS = [
-        "popularity.desc",
-        "vote_count.desc",
-        "revenue.desc",
-        "primary_release_date.desc",
+    # All TMDB genre IDs
+    GENRES = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 10770, 53, 10752, 37]
+
+    # Year ranges for fine-grained discovery
+    YEARS = list(range(1970, 2027))  # 1970-2026
+
+    # Vote count ranges to segment results
+    VOTE_RANGES = [
+        (0, 10),
+        (10, 100),
+        (100, 1000),
+        (1000, 100000),
     ]
 
-    YEAR_RANGES = [
-        (1900, 1990),
-        (1991, 2000),
-        (2001, 2005),
-        (2006, 2010),
-        (2011, 2015),
-        (2016, 2018),
-        (2019, 2021),
-        (2022, 2025),
-    ]
+    # Major languages for additional coverage
+    LANGUAGES = ["en", "es", "fr", "de", "ja", "ko", "zh", "hi", "it", "pt"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, strategy="all", *args, **kwargs):
+        """
+        Args:
+            strategy: 'genre', 'year', 'language', or 'all'
+        """
         super().__init__(*args, **kwargs)
+        self.strategy = strategy
         self.seen_ids = set()
         self.stats = {
             "total_discovered": 0,
@@ -54,45 +60,66 @@ class DiscoverSpider(scrapy.Spider):
         self.logger.info(f"Discovery complete: {self.stats}")
 
     def start_requests(self):
-        """Generate all discovery requests."""
+        """Generate discovery requests based on strategy."""
         api_key = self.settings.get("TMDB_API_KEY")
         base_url = self.settings.get("TMDB_BASE_URL")
 
-        # Strategy 1: Different sort orders (each can yield up to 10,000 movies)
-        for sort_by in self.SORT_OPTIONS:
-            for page in range(1, 501):  # 500 pages max per query
-                url = (
-                    f"{base_url}/discover/movie"
-                    f"?api_key={api_key}"
-                    f"&sort_by={sort_by}"
-                    f"&vote_count.gte=10"  # Filter low-quality entries
-                    f"&page={page}"
-                )
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse,
-                    meta={"strategy": f"sort_{sort_by}", "page": page},
-                    dont_filter=True,
-                )
+        if self.strategy in ["genre", "all"]:
+            # Strategy 1: Genre + Vote range combinations
+            for genre_id in self.GENRES:
+                for vote_min, vote_max in self.VOTE_RANGES:
+                    for page in range(1, 501):
+                        url = (
+                            f"{base_url}/discover/movie"
+                            f"?api_key={api_key}"
+                            f"&with_genres={genre_id}"
+                            f"&vote_count.gte={vote_min}"
+                            f"&vote_count.lte={vote_max}"
+                            f"&sort_by=popularity.desc"
+                            f"&page={page}"
+                        )
+                        yield scrapy.Request(
+                            url,
+                            callback=self.parse,
+                            meta={"strategy": f"genre_{genre_id}_vote_{vote_min}_{vote_max}", "page": page},
+                            dont_filter=True,
+                        )
 
-        # Strategy 2: Year-based filtering
-        for start_year, end_year in self.YEAR_RANGES:
-            for page in range(1, 201):  # 200 pages per year range
-                url = (
-                    f"{base_url}/discover/movie"
-                    f"?api_key={api_key}"
-                    f"&primary_release_date.gte={start_year}-01-01"
-                    f"&primary_release_date.lte={end_year}-12-31"
-                    f"&sort_by=popularity.desc"
-                    f"&vote_count.gte=5"
-                    f"&page={page}"
-                )
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse,
-                    meta={"strategy": f"year_{start_year}_{end_year}", "page": page},
-                    dont_filter=True,
-                )
+        if self.strategy in ["year", "all"]:
+            # Strategy 2: Year-based (single year for precision)
+            for year in self.YEARS:
+                for page in range(1, 501):
+                    url = (
+                        f"{base_url}/discover/movie"
+                        f"?api_key={api_key}"
+                        f"&primary_release_year={year}"
+                        f"&sort_by=popularity.desc"
+                        f"&page={page}"
+                    )
+                    yield scrapy.Request(
+                        url,
+                        callback=self.parse,
+                        meta={"strategy": f"year_{year}", "page": page},
+                        dont_filter=True,
+                    )
+
+        if self.strategy in ["language", "all"]:
+            # Strategy 3: Language-based
+            for lang in self.LANGUAGES:
+                for page in range(1, 501):
+                    url = (
+                        f"{base_url}/discover/movie"
+                        f"?api_key={api_key}"
+                        f"&with_original_language={lang}"
+                        f"&sort_by=popularity.desc"
+                        f"&page={page}"
+                    )
+                    yield scrapy.Request(
+                        url,
+                        callback=self.parse,
+                        meta={"strategy": f"lang_{lang}", "page": page},
+                        dont_filter=True,
+                    )
 
     def parse(self, response):
         """Parse discover response and yield unique movie IDs."""
@@ -132,7 +159,8 @@ class DiscoverSpider(scrapy.Spider):
             )
 
         # Log progress periodically
-        if self.stats["unique_discovered"] % 5000 == 0:
+        if self.stats["unique_discovered"] % 10000 == 0:
             self.logger.info(
-                f"Progress: {self.stats['unique_discovered']} unique movies discovered"
+                f"Progress: {self.stats['unique_discovered']} unique movies discovered "
+                f"(duplicates: {self.stats['duplicates_skipped']})"
             )

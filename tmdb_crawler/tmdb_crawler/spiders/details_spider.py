@@ -75,7 +75,7 @@ class DetailsSpider(scrapy.Spider):
             self.logger.error(f"Movie IDs file not found: {ids_path}")
             return movie_ids
 
-        with open(ids_path, "r") as f:
+        with open(ids_path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -185,7 +185,7 @@ class DetailsSpider(scrapy.Spider):
         except json.JSONDecodeError:
             reviews_data = {}
 
-        # Extract up to 10 reviews
+        # Extract up to 10 reviews (get as many as available, up to 10)
         reviews = reviews_data.get("results", [])[:10]
         movie_data["reviews"] = [
             {
@@ -198,6 +198,7 @@ class DetailsSpider(scrapy.Spider):
             }
             for r in reviews
         ]
+        movie_data["review_count"] = len(movie_data["reviews"])
 
         # Add crawl metadata
         movie_data["crawled_at"] = datetime.utcnow().isoformat() + "Z"
@@ -224,6 +225,7 @@ class DetailsSpider(scrapy.Spider):
             cast=movie_data.get("cast", []),
             crew=movie_data.get("crew", []),
             reviews=movie_data.get("reviews", []),
+            review_count=movie_data.get("review_count", 0),
             poster_path=movie_data.get("poster_path"),
             backdrop_path=movie_data.get("backdrop_path"),
             homepage=movie_data.get("homepage"),

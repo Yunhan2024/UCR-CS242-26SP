@@ -15,6 +15,7 @@ logs/
 
 # Data files (too large for git)
 data/movie_ids.jsonl
+data/movie_ids_old.jsonl
 data/movies/
 data/posters/
 data/crawl_stats.json

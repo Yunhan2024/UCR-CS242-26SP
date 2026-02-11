@@ -44,6 +44,7 @@ COOKIES_ENABLED = False
 
 # Enable pipelines
 ITEM_PIPELINES = {
+    "tmdb_crawler.pipelines.DuplicateFilterPipeline": 100,
     "tmdb_crawler.pipelines.JsonWriterPipeline": 300,
     "tmdb_crawler.pipelines.StatsPipeline": 400,
 }
