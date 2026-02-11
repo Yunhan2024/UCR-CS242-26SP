@@ -20,6 +20,7 @@ This implementation uses **PyElasticsearch** (`elasticsearch` Python client) and
 | Correctness: robust ingestion | Supports `zip/dir/json/jsonl`; filters non-target files; records parse errors |
 | Efficiency: throughput-oriented ingestion | Uses `helpers.parallel_bulk` with configurable `threads/chunk-size/queue-size` |
 | Explain index design choices | Analyzer strategy, field decomposition, and trade-offs documented below |
+| Report index runtime vs document volume (A2 iii) | `a2_index/benchmark_runtime.py`, `a2_index/benchmarks/runtime_points.csv`, `a2_index/benchmarks/runtime_plot.png` |
 
 ## 3. Executable Interface (Required by Assignment)
 
@@ -128,7 +129,46 @@ This substantially improves throughput versus per-document writes.
 - Only IDs used for deduplication are retained in memory.
 - Progress logging supports long-running job observability.
 
-## 7. Reproducibility and Output Artifacts
+## 7. Index Creation Runtime Benchmark (A2 Requirement iii)
+
+To satisfy the requirement of reporting index-creation runtime as a function of document volume, a controlled benchmark was executed using incremental document caps.
+
+### 7.1 Benchmark protocol
+
+- Elasticsearch version: `8.19.3` (single-node local deployment)
+- Analyzer: `english_stem`
+- Ingestion settings: `threads=6`, `chunk_size=800`, `queue_size=12`
+- Source: `/bigdata/renlab/rui001/IR/data.zip` (restricted to `data/movies`)
+- Document points: `10,000`, `50,000`, `100,000`, `150,000`, `220,243`
+
+Reproduction command:
+
+```bash
+python3 a2_index/benchmark_runtime.py \
+  --source /bigdata/renlab/rui001/IR/data.zip \
+  --es-url http://127.0.0.1:9200 \
+  --doc-points 10000,50000,100000,150000,220243
+```
+
+### 7.2 Measured results
+
+| Documents Indexed | Runtime (s) | Throughput (docs/s) |
+|---:|---:|---:|
+| 10,000 | 5.34 | 1,872.66 |
+| 50,000 | 11.27 | 4,436.56 |
+| 100,000 | 20.59 | 4,856.73 |
+| 150,000 | 30.58 | 4,905.17 |
+| 220,243 | 42.93 | 5,130.28 |
+
+### 7.3 Figure and data artifacts
+
+- Runtime plot: `a2_index/benchmarks/runtime_plot.png`
+- Raw benchmark points: `a2_index/benchmarks/runtime_points.csv`
+- Structured summary: `a2_index/benchmarks/benchmark_summary.json`
+
+Interpretation: runtime increases approximately linearly with corpus size under fixed ingestion settings, while effective throughput improves after warm-up and stabilizes above approximately `4.8k docs/s`.
+
+## 8. Reproducibility and Output Artifacts
 
 Each run emits a JSON report with:
 
@@ -148,7 +188,7 @@ Key result in that run:
 - `docs_failed = 0`
 - `parse_errors = 0`
 
-## 8. Validation Commands
+## 9. Validation Commands
 
 ```bash
 curl http://127.0.0.1:9200/tmdb_movies_v1/_count?pretty
@@ -158,14 +198,16 @@ curl http://127.0.0.1:9200/_cat/indices?v
 
 These commands verify index existence, document count, and cluster health.
 
-## 9. File Inventory
+## 10. File Inventory
 
 - `indexbuilder.sh`: required executable entry point.
 - `a2_index/build_es_index.py`: core indexing pipeline.
+- `a2_index/benchmark_runtime.py`: runtime benchmarking utility for A2 (iii).
 - `a2_index/requirements-index.txt`: A2 dependency list.
-- `a2_index/reports/*.json`: run evidence and metrics.
+- `a2_index/reports/*.json`: indexing run evidence and metrics.
+- `a2_index/benchmarks/*`: benchmark logs, CSV data, and runtime plot.
 
-## 10. Notes
+## 11. Notes
 
 - This implementation intentionally uses **PyElasticsearch** (permitted by A2).
 - Solr is not used.

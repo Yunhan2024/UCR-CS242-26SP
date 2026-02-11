@@ -1,0 +1,57 @@
+{
+  "timestamp_utc": "2026-02-11T23:49:20.793575+00:00",
+  "source": "/bigdata/renlab/rui001/IR/data.zip",
+  "es_url": "http://127.0.0.1:9200",
+  "analyzer_option": "english_stem",
+  "doc_points": [
+    10000,
+    50000,
+    100000,
+    150000,
+    220243
+  ],
+  "runs": [
+    {
+      "max_docs": 10000,
+      "prepared_docs": 10000,
+      "indexed_docs": 10000,
+      "failed_docs": 0,
+      "duration_sec": 5.34,
+      "docs_per_sec": 1872.66
+    },
+    {
+      "max_docs": 50000,
+      "prepared_docs": 50000,
+      "indexed_docs": 50000,
+      "failed_docs": 0,
+      "duration_sec": 11.27,
+      "docs_per_sec": 4436.56
+    },
+    {
+      "max_docs": 100000,
+      "prepared_docs": 100000,
+      "indexed_docs": 100000,
+      "failed_docs": 0,
+      "duration_sec": 20.59,
+      "docs_per_sec": 4856.73
+    },
+    {
+      "max_docs": 150000,
+      "prepared_docs": 150000,
+      "indexed_docs": 150000,
+      "failed_docs": 0,
+      "duration_sec": 30.58,
+      "docs_per_sec": 4905.17
+    },
+    {
+      "max_docs": 220243,
+      "prepared_docs": 220243,
+      "indexed_docs": 220243,
+      "failed_docs": 0,
+      "duration_sec": 42.93,
+      "docs_per_sec": 5130.28
+    }
+  ],
+  "csv": "a2_index/benchmarks/runtime_points.csv",
+  "plot": "a2_index/benchmarks/runtime_plot.png"
+}

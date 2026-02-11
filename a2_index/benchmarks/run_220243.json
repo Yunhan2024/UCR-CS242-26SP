@@ -1,0 +1,36 @@
+{
+  "timestamp_utc": "2026-02-11T23:49:20.287881+00:00",
+  "source": "/bigdata/renlab/rui001/IR/data.zip",
+  "index_name": "tmdb_runtime_bench_220243",
+  "analyzer_option": "english_stem",
+  "dry_run": false,
+  "es_url": "http://127.0.0.1:9200",
+  "es_count": 220243,
+  "args": {
+    "max_docs": 220243,
+    "max_review_chars": 2000,
+    "threads": 6,
+    "chunk_size": 800,
+    "queue_size": 12,
+    "request_timeout": 120,
+    "shards": 1,
+    "replicas": 0,
+    "recreate_index": true,
+    "source_subpath": "data/movies",
+    "include_jsonl": false
+  },
+  "stats": {
+    "files_seen": 220243,
+    "docs_seen": 220243,
+    "docs_prepared": 220243,
+    "docs_indexed": 220243,
+    "docs_failed": 0,
+    "docs_skipped_non_movie": 0,
+    "docs_skipped_duplicate": 0,
+    "parse_errors": 0,
+    "started_at_utc": "2026-02-11T23:48:37.357183+00:00",
+    "ended_at_utc": "2026-02-11T23:49:20.287787+00:00",
+    "duration_sec": 42.93
+  },
+  "error_samples": []
+}
