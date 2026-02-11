@@ -73,6 +73,36 @@ scrapy crawl discover
 scrapy crawl details -s LOG_FILE=../logs/crawler.log
 ```
 
+## Part A2: Build Elasticsearch Index
+
+The A2 indexing implementation is in `a2_index/`.
+
+```bash
+pip install -r a2_index/requirements-index.txt
+chmod +x indexbuilder.sh
+
+# Assignment-style executable entry
+./indexbuilder.sh /path/to/data.zip english_stem
+
+# Dry-run (parse/transform only)
+python a2_index/build_es_index.py \
+  --source /path/to/data.zip \
+  --source-subpath data/movies \
+  --analyzer-option english_stem \
+  --dry-run
+
+# Build index
+python a2_index/build_es_index.py \
+  --source /path/to/data.zip \
+  --source-subpath data/movies \
+  --analyzer-option english_stem \
+  --es-url http://localhost:9200 \
+  --index-name tmdb_movies_v1 \
+  --recreate-index
+```
+
+For field design and indexing choices, see `a2_index/README_A2.md`.
+
 ## Data Schema
 
 ```json
