@@ -1,0 +1,11 @@
+
+# API Keys
+.env
+Keys/
+*.env
+config.py
+
+# Data
+data/movies/
+data/movie_ids.jsonl
+logs/

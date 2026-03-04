@@ -10,7 +10,16 @@ SPIDER_MODULES = ["tmdb_crawler.spiders"]
 NEWSPIDER_MODULE = "tmdb_crawler.spiders"
 
 # TMDB API Configuration
-TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "your-api-key-here")
+TMDB_API_KEY = [
+    os.getenv("TMDB_API_KEY"),
+    os.getenv("TMDB_API_KEY_2"),
+    os.getenv("TMDB_API_KEY_3"),
+]
+TMDB_API_KEY = [key for key in TMDB_API_KEY if key]
+
+if not TMDB_API_KEY:
+    TMDB_API_KEY = ["your_api_key_here"]
+    
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
 # Crawl responsibly - identify yourself
@@ -20,20 +29,20 @@ USER_AGENT = "TMDB-Crawler/1.0 (CS242 Search Engine Project; +https://github.com
 ROBOTSTXT_OBEY = False
 
 # Rate limiting - TMDB allows ~50 req/sec, we use 16 to be safe
-CONCURRENT_REQUESTS = 16
+CONCURRENT_REQUESTS = 32
 DOWNLOAD_DELAY = 0.1  # 100ms between requests
-CONCURRENT_REQUESTS_PER_DOMAIN = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 32
 
 # Auto-throttle for adaptive rate limiting
 AUTOTHROTTLE_ENABLED = True
 AUTOTHROTTLE_START_DELAY = 0.1
 AUTOTHROTTLE_MAX_DELAY = 2.0
-AUTOTHROTTLE_TARGET_CONCURRENCY = 16.0
+AUTOTHROTTLE_TARGET_CONCURRENCY = 32
 AUTOTHROTTLE_DEBUG = False
 
 # Retry configuration
 RETRY_ENABLED = True
-RETRY_TIMES = 3
+RETRY_TIMES = 10
 RETRY_HTTP_CODES = [500, 502, 503, 504, 429]
 
 # Timeouts

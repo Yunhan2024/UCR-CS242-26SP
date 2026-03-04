@@ -3,6 +3,7 @@ Details Spider - Phase 2
 
 Fetches full movie details including credits and reviews for each discovered movie ID.
 Uses callback chaining to merge multiple API responses into a single MovieItem.
+Supports multiple API keys for higher throughput.
 """
 
 import json
@@ -28,6 +29,7 @@ class DetailsSpider(scrapy.Spider):
             "fetched": 0,
             "failed": 0,
         }
+        self.api_key_counter = 0
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -39,25 +41,44 @@ class DetailsSpider(scrapy.Spider):
         """Log final statistics."""
         self.logger.info(f"Details fetch complete: {self.stats}")
 
+    def _get_api_key(self):
+        """Get next API key in rotation."""
+        api_keys = self.settings.get("TMDB_API_KEY")
+        
+        if isinstance(api_keys, str):
+            return api_keys
+        
+        if isinstance(api_keys, list) and len(api_keys) > 0:
+            key = api_keys[self.api_key_counter % len(api_keys)]
+            self.api_key_counter += 1
+            return key
+        
+        self.logger.error("TMDB_API_KEY not configured properly")
+        return None
+
     def start_requests(self):
         """Load movie IDs and generate detail requests."""
-        api_key = self.settings.get("TMDB_API_KEY")
         base_url = self.settings.get("TMDB_BASE_URL")
         movies_dir = Path(self.settings.get("MOVIES_DIR", "../data/movies"))
 
-        # Load movie IDs from discovery output
+        api_keys = self.settings.get("TMDB_API_KEY")
+        if isinstance(api_keys, list):
+            self.logger.info(f"Using {len(api_keys)} API keys in rotation")
+        else:
+            self.logger.info("Using single API key")
+
         movie_ids = self._load_movie_ids()
         self.stats["total_ids"] = len(movie_ids)
         self.logger.info(f"Loaded {len(movie_ids)} movie IDs to process")
 
         for movie_id in movie_ids:
-            # Skip if already crawled (resume support)
             subdir = str(movie_id // 1000)
             filepath = movies_dir / subdir / f"{movie_id}.json"
             if filepath.exists():
                 self.stats["skipped_existing"] += 1
                 continue
 
+            api_key = self._get_api_key()
             url = f"{base_url}/movie/{movie_id}?api_key={api_key}"
             yield scrapy.Request(
                 url,
@@ -88,7 +109,6 @@ class DetailsSpider(scrapy.Spider):
                 except json.JSONDecodeError:
                     continue
 
-        # Remove duplicates while preserving order
         seen = set()
         unique_ids = []
         for mid in movie_ids:
@@ -109,14 +129,12 @@ class DetailsSpider(scrapy.Spider):
             self.stats["failed"] += 1
             return
 
-        # Check for API error
         if "status_code" in movie_data and movie_data.get("success") is False:
             self.logger.warning(f"API error for movie {movie_id}: {movie_data.get('status_message')}")
             self.stats["failed"] += 1
             return
 
-        # Chain request for credits
-        api_key = self.settings.get("TMDB_API_KEY")
+        api_key = self._get_api_key()
         base_url = self.settings.get("TMDB_BASE_URL")
         credits_url = f"{base_url}/movie/{movie_id}/credits?api_key={api_key}"
 
@@ -137,7 +155,6 @@ class DetailsSpider(scrapy.Spider):
         except json.JSONDecodeError:
             credits_data = {}
 
-        # Extract top 20 cast members
         cast = credits_data.get("cast", [])[:20]
         movie_data["cast"] = [
             {
@@ -149,7 +166,6 @@ class DetailsSpider(scrapy.Spider):
             for c in cast
         ]
 
-        # Extract key crew members (directors, writers, producers)
         key_jobs = {"Director", "Writer", "Screenplay", "Producer", "Executive Producer"}
         crew = credits_data.get("crew", [])
         movie_data["crew"] = [
@@ -163,8 +179,7 @@ class DetailsSpider(scrapy.Spider):
             if c.get("job") in key_jobs
         ]
 
-        # Chain request for reviews
-        api_key = self.settings.get("TMDB_API_KEY")
+        api_key = self._get_api_key()
         base_url = self.settings.get("TMDB_BASE_URL")
         reviews_url = f"{base_url}/movie/{movie_id}/reviews?api_key={api_key}"
 
@@ -185,7 +200,6 @@ class DetailsSpider(scrapy.Spider):
         except json.JSONDecodeError:
             reviews_data = {}
 
-        # Extract up to 10 reviews (get as many as available, up to 10)
         reviews = reviews_data.get("results", [])[:10]
         movie_data["reviews"] = [
             {
@@ -200,10 +214,8 @@ class DetailsSpider(scrapy.Spider):
         ]
         movie_data["review_count"] = len(movie_data["reviews"])
 
-        # Add crawl metadata
         movie_data["crawled_at"] = datetime.utcnow().isoformat() + "Z"
 
-        # Create and yield MovieItem
         item = MovieItem(
             id=movie_data.get("id"),
             imdb_id=movie_data.get("imdb_id"),
@@ -236,7 +248,6 @@ class DetailsSpider(scrapy.Spider):
 
         self.stats["fetched"] += 1
 
-        # Log progress periodically
         if self.stats["fetched"] % 1000 == 0:
             self.logger.info(
                 f"Progress: {self.stats['fetched']} movies fetched, "
