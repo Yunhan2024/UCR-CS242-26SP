@@ -42,6 +42,10 @@ class MovieItem(scrapy.Item):
     # Credits
     cast = scrapy.Field()  # List of {id, name, character, order}
     crew = scrapy.Field()  # List of {id, name, job, department}
+    
+    #Nation
+    production_countries = scrapy.Field()  # List of all production countries
+    origin_country = scrapy.Field()        # Primary country(ies)
 
     # User content
     reviews = scrapy.Field()  # List of {id, author, content, rating, created_at}, max 10

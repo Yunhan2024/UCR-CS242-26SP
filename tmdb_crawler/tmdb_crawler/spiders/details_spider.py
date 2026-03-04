@@ -228,6 +228,8 @@ class DetailsSpider(scrapy.Spider):
             review_count=movie_data.get("review_count", 0),
             poster_path=movie_data.get("poster_path"),
             backdrop_path=movie_data.get("backdrop_path"),
+            production_countries=movie_data.get("production_countries", []),
+            origin_country=movie_data.get("origin_country", []),
             homepage=movie_data.get("homepage"),
             crawled_at=movie_data.get("crawled_at"),
         )
