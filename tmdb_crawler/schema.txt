@@ -1,0 +1,70 @@
+# Movie Item Schema
+{
+    "id": int,                          # TMDB电影ID
+    "imdb_id": str,                     # IMDB ID (如 "tt0137523")
+    "title": str,                       # 电影标题
+    "original_title": str,              # 原始标题
+    "original_language": str,           # 原始语言代码
+    "overview": str,                    # 剧情简介
+    "tagline": str,                     # 宣传语
+    "release_date": str,                # 发布日期 "YYYY-MM-DD"
+    "status": str,                      # 状态 (Released, Post Production等)
+    "vote_average": float,              # 平均评分 (0-10)
+    "vote_count": int,                  # 投票数
+    "popularity": float,                # 热度分数
+    "runtime": int,                     # 时长（分钟）
+    "budget": int,                      # 预算（美元）
+    "revenue": int,                     # 票房收入（美元）
+    "adult": bool,                      # 是否成人内容
+    
+    "genres": [                         # 类型列表
+        {
+            "id": int,
+            "name": str                 # "Action", "Drama"等
+        }
+    ],
+    
+    "cast": [                           # 演员表（前20）
+        {
+            "id": int,
+            "name": str,                # 演员名
+            "character": str,           # 角色名
+            "order": int                # 出场顺序
+        }
+    ],
+    
+    "crew": [                           # 主创人员
+        {
+            "id": int,
+            "name": str,                # 名字
+            "job": str,                 # 职位 (Director, Writer等)
+            "department": str           # 部门
+        }
+    ],
+    
+    "reviews": [                        # 用户评论（最多10条）
+        {
+            "id": str,
+            "author": str,              # 作者名
+            "author_username": str,     # 用户名
+            "content": str,             # 评论内容
+            "rating": float,            # 评分 (可能为null)
+            "created_at": str           # 创建时间
+        }
+    ],
+    
+    "review_count": int,                # 评论总数
+    "poster_path": str,                 # 海报图片路径
+    "backdrop_path": str,               # 背景图片路径
+    
+    "production_countries": [           # 制片国家 
+        {
+            "iso_3166_1": str,          # 国家代码 "US", "CN"
+            "name": str                 # 国家名 "United States"
+        }
+    ],
+    
+    "origin_country": [str],            # 原产国代码列表 ["US", "GB"] ⭐️⭐️⭐️
+    "homepage": str,                    # 官方网站
+    "crawled_at": str                   # 爬取时间戳
+}

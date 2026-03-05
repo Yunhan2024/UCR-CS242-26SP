@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TMDB Movie Search Engine</title>
+
+    <!-- Leaflet CSS (for world map) -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        crossorigin=""
+    />
+
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <!-- ── Header ──────────────────────────────────── -->
+    <header class="header">
+        <h1 class="header__title">🎬 TMDB Movie Search Engine</h1>
+        <p class="header__subtitle">CS242 · Group 7 · Search 220,000+ movies</p>
+    </header>
+
+    <!-- ── Search Controls ─────────────────────────── -->
+    <main class="container">
+        <section class="search-panel">
+            <div class="search-bar">
+                <input
+                    type="text"
+                    id="queryInput"
+                    placeholder="Search for movies, actors, keywords…"
+                    autocomplete="off"
+                />
+                <button id="searchBtn">Search</button>
+            </div>
+
+            <div class="search-options">
+                <div class="option-group">
+                    <label class="option-label">Index:</label>
+                    <label class="radio-label">
+                        <input type="radio" name="indexType" value="elasticsearch" checked />
+                        Elasticsearch (Sparse)
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="indexType" value="bert" />
+                        BERT + FAISS (Dense)
+                    </label>
+                </div>
+
+                <div class="option-group">
+                    <label class="option-label" for="topK">Top-K:</label>
+                    <select id="topK">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Tabs ────────────────────────────────── -->
+        <nav class="tabs">
+            <button class="tab active" data-tab="results">🔍 Search Results</button>
+            <button class="tab" data-tab="map">🌍 World Map</button>
+            <button class="tab" data-tab="compare">⚖️ Compare Indexes</button>
+        </nav>
+
+        <!-- ── Tab: Search Results ─────────────────── -->
+        <section id="tab-results" class="tab-content active">
+            <div id="searchMeta" class="search-meta hidden"></div>
+            <div id="resultsContainer" class="results-container">
+                <p class="placeholder-text">
+                    Enter a query above and click <strong>Search</strong> to see results.
+                </p>
+            </div>
+        </section>
+
+        <!-- ── Tab: World Map ──────────────────────── -->
+        <section id="tab-map" class="tab-content">
+            <div class="map-controls">
+                <button id="loadMapBtn" class="btn-secondary">Load Country Data</button>
+                <span id="mapStatus" class="map-status"></span>
+            </div>
+            <div id="mapContainer" class="map-container"></div>
+            <div id="countryInfo" class="country-info hidden"></div>
+        </section>
+
+        <!-- ── Tab: Compare Indexes ────────────────── -->
+        <section id="tab-compare" class="tab-content">
+            <p class="compare-hint">
+                Search with the same query on both indexes to compare ranking quality.
+                Click <strong>Run Comparison</strong> to see results side by side.
+            </p>
+            <button id="compareBtn" class="btn-secondary">Run Comparison</button>
+            <div class="compare-grid">
+                <div class="compare-col">
+                    <h3>Elasticsearch (Sparse)</h3>
+                    <div id="compareES" class="compare-results"></div>
+                </div>
+                <div class="compare-col">
+                    <h3>BERT + FAISS (Dense)</h3>
+                    <div id="compareBERT" class="compare-results"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ── Footer ──────────────────────────────────── -->
+    <footer class="footer">
+        <p>CS242 — UC Riverside — Spring 2026 — Group 7</p>
+    </footer>
+
+    <!-- ── Scripts ─────────────────────────────────── -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/map.js"></script>
+</body>
+</html>
