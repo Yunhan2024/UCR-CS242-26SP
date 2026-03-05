@@ -12,7 +12,6 @@ crawljob/
 # Logs
 logs/
 *.log
-a2_index/reports/
 
 # Data files (too large for git)
 data/movie_ids.jsonl

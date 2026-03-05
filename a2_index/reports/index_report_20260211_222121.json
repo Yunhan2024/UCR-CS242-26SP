@@ -1,0 +1,33 @@
+{
+  "timestamp_utc": "2026-02-11T22:21:21.084355+00:00",
+  "source": "/bigdata/renlab/rui001/IR/data.zip",
+  "index_name": "tmdb_movies_v1",
+  "dry_run": true,
+  "es_url": "http://localhost:9200",
+  "es_count": null,
+  "args": {
+    "max_docs": 0,
+    "max_review_chars": 2000,
+    "threads": 4,
+    "chunk_size": 500,
+    "queue_size": 8,
+    "request_timeout": 120,
+    "shards": 1,
+    "replicas": 0,
+    "recreate_index": false
+  },
+  "stats": {
+    "files_seen": 266078,
+    "docs_seen": 752410,
+    "docs_prepared": 228974,
+    "docs_indexed": 228974,
+    "docs_failed": 0,
+    "docs_skipped_non_movie": 266125,
+    "docs_skipped_duplicate": 257311,
+    "parse_errors": 45976,
+    "started_at_utc": "2026-02-11T22:20:40.301060+00:00",
+    "ended_at_utc": "2026-02-11T22:21:21.084050+00:00",
+    "duration_sec": 40.78
+  },
+  "error_samples": []
+}

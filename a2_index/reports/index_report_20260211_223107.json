@@ -1,0 +1,36 @@
+{
+  "timestamp_utc": "2026-02-11T22:31:07.811311+00:00",
+  "source": "/bigdata/renlab/rui001/IR/UCR-CS242-26SP/data/samples",
+  "index_name": "tmdb_movies_v1",
+  "analyzer_option": "english_stem",
+  "dry_run": true,
+  "es_url": "http://localhost:9200",
+  "es_count": null,
+  "args": {
+    "max_docs": 1,
+    "max_review_chars": 2000,
+    "threads": 4,
+    "chunk_size": 500,
+    "queue_size": 8,
+    "request_timeout": 120,
+    "shards": 1,
+    "replicas": 0,
+    "recreate_index": false,
+    "source_subpath": "data/samples",
+    "include_jsonl": false
+  },
+  "stats": {
+    "files_seen": 1,
+    "docs_seen": 1,
+    "docs_prepared": 1,
+    "docs_indexed": 1,
+    "docs_failed": 0,
+    "docs_skipped_non_movie": 0,
+    "docs_skipped_duplicate": 0,
+    "parse_errors": 0,
+    "started_at_utc": "2026-02-11T22:31:07.810736+00:00",
+    "ended_at_utc": "2026-02-11T22:31:07.811240+00:00",
+    "duration_sec": 0.0
+  },
+  "error_samples": []
+}
