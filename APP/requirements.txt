@@ -1,15 +1,17 @@
 # ── Web Framework ──────────────────────────────────
 flask>=3.0
 
-# ── Elasticsearch ──────────────────────────────────
-elasticsearch>=8.0,<9.0
+# ── Elasticsearch (matches requirements-index.txt) ─
+elasticsearch>=8.12.0,<9.0.0
 
-# ── BERT / Sentence Transformers ───────────────────
-sentence-transformers>=2.2
+# ── BERT (matches CS242_BERT_Indexing.ipynb) ───────
 torch>=2.0
+transformers>=4.30
 
-# ── FAISS (CPU version) ───────────────────────────
+# ── FAISS ─────────────────────────────────────────
+# Use faiss-gpu-cu12 if GPU available, otherwise faiss-cpu
 faiss-cpu>=1.7
 
 # ── Utilities ─────────────────────────────────────
 numpy>=1.24
+tqdm

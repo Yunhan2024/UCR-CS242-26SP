@@ -1,6 +1,8 @@
 """
 Configuration for the Movie Search Engine.
-Update these values to match your local environment.
+Aligned with:
+  - build_es_index.py  → ES index: tmdb_movies_s3_v1, analyzer: en_tmdb_english_stem
+  - CS242_BERT_Indexing.ipynb → model: all-MiniLM-L6-v2, FAISS IndexFlatL2, 384-dim
 """
 
 import os
@@ -8,23 +10,24 @@ import os
 # ── Paths ──────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
-DATA_DIR = os.path.join(BASE_DIR, "..", "data", "movies")
 
 # ── Elasticsearch ──────────────────────────────────────
+# Index name from the latest indexing run (index_report_tmdb_s3_20260304.json)
 ES_HOST = "http://localhost:9200"
-ES_INDEX_NAME = "tmdb_movies"
-ES_USER = "elastic"         # change if needed
-ES_PASSWORD = ""             # change if needed
+ES_INDEX_NAME = "tmdb_movies_s3_v1"
 
 # ── BERT / FAISS ───────────────────────────────────────
-# Model used for generating embeddings.
-# Option A (recommended for speed): "sentence-transformers/all-MiniLM-L6-v2" → 384-dim
-# Option B (standard BERT):         "bert-base-uncased" → 768-dim
+# Model and index file names from CS242_BERT_Indexing.ipynb
 BERT_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-EMBEDDING_DIM = 384          # must match the model above
+EMBEDDING_DIM = 384
 
-FAISS_INDEX_PATH = os.path.join(MODELS_DIR, "faiss_index.bin")
-PASSAGE_MAP_PATH = os.path.join(MODELS_DIR, "passage_map.pkl")
+# IMPORTANT: The notebook saves as "movie_faiss.index" (not faiss_index.bin)
+FAISS_INDEX_PATH = os.path.join(MODELS_DIR, "movie_faiss.index")
+
+# IMPORTANT: movie_metadata is a LIST, not a dict.
+# Position i in the list corresponds to FAISS vector i.
+# Each entry: {"id", "imdb_id", "title", "overview", "genres", "release_date",
+#              "vote_average", "countries", "country_codes", "origin_country", "reviews"}
 MOVIE_METADATA_PATH = os.path.join(MODELS_DIR, "movie_metadata.pkl")
 
 # ── Flask ──────────────────────────────────────────────

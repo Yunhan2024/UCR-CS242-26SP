@@ -313,6 +313,20 @@ body {
     line-height: 1.5;
 }
 
+.result-link {
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-decoration: none;
+    margin-left: 0.4rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.result-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
 /* ── World Map ───────────────────────────────────── */
 .map-controls {
     display: flex;

@@ -99,7 +99,7 @@ def api_search():
         module = _get_bert_module()
         if module is None:
             return jsonify({"error": "BERT/FAISS index is not available. "
-                            "Make sure faiss_index.bin and passage_map.pkl exist."}), 503
+                            "Make sure movie_faiss.index and movie_metadata.pkl exist in backend/models/."}), 503
         results = module.search(query, top_k=top_k, country_filter=country)
     else:
         module = _get_es_module()
@@ -123,24 +123,36 @@ def api_countries():
     """
     Return movie counts per country for the world map visualization.
 
+    Prefers ES (has origin_country keyword field).
+    Falls back to BERT metadata (also has origin_country).
+
     Response JSON:
         {
             "countries": [
                 {"country_code": "US", "count": 52340},
-                {"country_code": "GB", "count": 12345},
                 ...
             ]
         }
     """
-    module = _get_es_module()
-    if module is None:
-        return jsonify({"error": "Elasticsearch is not available."}), 503
+    # Try ES first — aggregation is fast
+    es = _get_es_module()
+    if es:
+        try:
+            countries = es.get_country_counts()
+            return jsonify({"countries": countries, "source": "elasticsearch"})
+        except Exception as e:
+            print(f"[WARN] ES country counts failed: {e}")
 
-    try:
-        countries = module.get_country_counts()
-        return jsonify({"countries": countries})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # Fallback to BERT metadata
+    bert = _get_bert_module()
+    if bert:
+        try:
+            countries = bert.get_country_counts()
+            return jsonify({"countries": countries, "source": "bert_metadata"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({"error": "Neither BERT metadata nor Elasticsearch is available."}), 503
 
 
 @app.route("/api/movie/<movie_id>", methods=["GET"])
@@ -158,13 +170,14 @@ def api_movie_detail(movie_id):
         except Exception:
             pass
 
-    # Fallback: check BERT metadata
+    # Fallback: search BERT metadata list by movie id
     bert = _get_bert_module()
     if bert:
         bert._load_resources()
-        meta = bert._movie_metadata.get(int(movie_id))
-        if meta:
-            return jsonify(meta)
+        target_id = int(movie_id)
+        for meta in bert._movie_metadata:
+            if meta.get("id") == target_id:
+                return jsonify(meta)
 
     return jsonify({"error": "Movie not found."}), 404
 

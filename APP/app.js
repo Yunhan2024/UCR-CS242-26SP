@@ -54,7 +54,8 @@ function renderCard(result, rank) {
         })
         .join("");
 
-    const countries = (result.countries || [])
+    // Countries can be: ["US","GB"] (from BERT) or [] (from ES)
+    const countries = (result.countries || result.country_names || [])
         .map(c => {
             const code = typeof c === "string" ? c : (c.iso_3166_1 || c.name || c);
             return `<span class="badge badge--country">${code}</span>`;
@@ -68,6 +69,15 @@ function renderCard(result, rank) {
     const year = result.release_year || "";
     const overview = result.overview || "No overview available.";
 
+    // Build links
+    let links = "";
+    if (result.imdb_id) {
+        links += ` <a href="https://www.imdb.com/title/${result.imdb_id}/" target="_blank" class="result-link">IMDb</a>`;
+    }
+    if (result.movie_id) {
+        links += ` <a href="https://www.themoviedb.org/movie/${result.movie_id}" target="_blank" class="result-link">TMDB</a>`;
+    }
+
     return `
         <div class="result-card">
             <div class="result-card__header">
@@ -75,6 +85,7 @@ function renderCard(result, rank) {
                     <span class="result-card__rank">#${rank}</span>
                     <span class="result-card__title">${result.title}</span>
                     <span class="result-card__year">(${year})</span>
+                    ${links}
                 </div>
                 <span class="result-card__score">Score: ${result.score}</span>
             </div>
