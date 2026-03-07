@@ -15,7 +15,7 @@ MODELS_DIR = os.path.join(BASE_DIR, "models")
 # The ES instance runs on the school server, not locally.
 # Update this to your assigned server, e.g. "http://class-0XX.cs.ucr.edu:9200"
 ES_HOST = "http://localhost:9200"
-ES_INDEX_NAME = "tmdb_movies_app_v1"
+ES_INDEX_NAME = "tmdb_movies_v2"
 
 # ── BERT / FAISS ───────────────────────────────────────
 # Model and index file names from CS242_BERT_Indexing.ipynb
@@ -32,5 +32,7 @@ MOVIE_METADATA_PATH = os.path.join(MODELS_DIR, "movie_metadata.pkl")
 
 # ── Flask ──────────────────────────────────────────────
 FLASK_HOST = "0.0.0.0"
-FLASK_PORT = 5000
-FLASK_DEBUG = True
+FLASK_PORT = 5432
+# Debug mode disabled — the reloader conflicts with FAISS/PyTorch on macOS,
+# causing "leaked semaphore" crashes. Set to True only for frontend-only dev.
+FLASK_DEBUG = False

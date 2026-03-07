@@ -10,6 +10,11 @@ Aligned with CS242_BERT_Indexing.ipynb:
 
 import pickle
 import time
+import os
+
+# Disable FAISS multithreading to avoid conflicts with PyTorch in Flask
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
 
 import faiss
 import numpy as np
@@ -57,6 +62,8 @@ def _load_resources():
     if _index is None:
         print(f"[FAISS] Loading index from: {config.FAISS_INDEX_PATH} ...")
         _index = faiss.read_index(config.FAISS_INDEX_PATH)
+        # Force single-thread search to avoid segfaults with PyTorch
+        faiss.omp_set_num_threads(1)
         print(f"[FAISS] Index loaded. Total vectors: {_index.ntotal}")
 
     if _movie_metadata is None:
@@ -67,7 +74,7 @@ def _load_resources():
 
 
 def encode_query(query: str) -> np.ndarray:
-    """Encode a query string into a 384-dim vector. Matches notebook's encode_query()."""
+    """Encode a query string into a 384-dim vector."""
     inputs = _tokenizer(
         query,
         return_tensors="pt",
@@ -78,15 +85,17 @@ def encode_query(query: str) -> np.ndarray:
         model_output = _model(**inputs)
 
     embedding = mean_pooling(model_output, inputs["attention_mask"])
-    return embedding.cpu().numpy().astype("float32")
+
+    # CRITICAL: fully detach from PyTorch before passing to FAISS.
+    # .cpu().detach().numpy() alone can leave PyTorch memory hooks.
+    # np.array(..., copy=True) ensures a clean, independent numpy array.
+    vec = embedding.cpu().detach().numpy()
+    return np.array(vec, dtype=np.float32, copy=True)
 
 
 def search(query: str, top_k: int = 10, country_filter: str = None) -> list:
     """
     Encode the query with BERT, search FAISS (L2), return top-k movies.
-
-    NOTE: FAISS IndexFlatL2 returns L2 *distances* (lower = better).
-    We convert to a similarity-like score for display.
     """
     _load_resources()
 
@@ -98,6 +107,8 @@ def search(query: str, top_k: int = 10, country_filter: str = None) -> list:
     # ── Search FAISS ──────────────────────────────────
     fetch_k = top_k * 5 if country_filter else top_k * 2
     start = time.time()
+    # Ensure contiguous C-order array for FAISS
+    query_vec = np.ascontiguousarray(query_vec.reshape(1, -1))
     distances, indices = _index.search(query_vec, fetch_k)
     search_time = time.time() - start
 
@@ -114,23 +125,17 @@ def search(query: str, top_k: int = 10, country_filter: str = None) -> list:
         meta = _movie_metadata[idx]
         movie_id = meta.get("id")
 
-        # Deduplicate by movie ID
         if movie_id in seen_ids:
             continue
         seen_ids.add(movie_id)
 
-        # Country filter using origin_country (1 country per movie)
         if country_filter:
             origins = meta.get("origin_country", [])
             if country_filter not in origins:
                 continue
 
-        # Convert L2 distance to a similarity score.
-        # L2 distance ≥ 0, lower is better. We invert for display:
-        #   similarity = 1 / (1 + distance)
         similarity = round(1.0 / (1.0 + float(dist)), 4)
 
-        # Extract release year from release_date string
         rd = meta.get("release_date") or ""
         release_year = str(rd)[:4] if rd else ""
 
@@ -155,9 +160,6 @@ def search(query: str, top_k: int = 10, country_filter: str = None) -> list:
 def get_country_counts() -> list:
     """
     Count movies per country using origin_country from BERT metadata.
-    origin_country is typically a single-element list like ["US"].
-
-    Returns: [{"country_code": "US", "count": 52340}, ...]
     """
     _load_resources()
 

@@ -15,7 +15,7 @@ This project builds a search engine using data crawled from TMDB (The Movie Data
 | Metric | Value |
 |--------|-------|
 | Movies | 221,645 |
-| Total Size | 1.09 GB (689 MB raw JSON) |
+| Total Size | 1.09 GB raw JSON |
 
 Each movie record includes: title, overview, tagline, release date, runtime, genres, cast (top 20), crew (key roles), user reviews (up to 10), ratings, popularity, budget, revenue, origin country, production countries, and more.
 
@@ -38,7 +38,7 @@ UCR-CS242-26SP/
 │   └── README_A2.md
 ├── bert/                           # Part B1: BERT dense indexing
 │   ├── CS242_BERT_Indexing.ipynb   # Colab notebook for building FAISS index
-│   └── requirements.txt
+│   ├── README_BERT.md              # Detailed B1 docs
 ├── APP/                            # Part B2: Web application
 │   ├── app.py                      # Flask web server
 │   ├── config.py                   # Central configuration
@@ -46,7 +46,7 @@ UCR-CS242-26SP/
 │   ├── bert_search.py              # BERT + FAISS query module
 │   ├── build_es_index.py           # ES indexer (with origin_country field)
 │   ├── requirements.txt
-│   ├── README.md                   # Detailed setup & architecture docs
+│   ├── README_B2.md                # Detailed setup & architecture docs
 │   ├── models/                     # BERT index files (not in git)
 │   │   ├── movie_faiss.index
 │   │   └── movie_metadata.pkl

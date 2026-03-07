@@ -1,14 +1,57 @@
 /**
  * map.js — World map visualization using Leaflet.js.
- * Shows movie counts per production country as a choropleth.
+ * Shows movie counts per origin country as a choropleth.
  */
 
 let map = null;
 let geoLayer = null;
 let countryData = {};  // { "US": 52340, "GB": 12345, ... }
 
+// GeoJSON source — uses ISO Alpha-3 as feature.id ("USA", "GBR", etc.)
 const GEOJSON_URL =
-    "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson";
+    "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json";
+
+// ── ISO Alpha-3 → Alpha-2 mapping ───────────────────
+// Our data uses 2-letter codes (US, GB), GeoJSON uses 3-letter (USA, GBR).
+const A3_TO_A2 = {
+    "AFG":"AF","ALB":"AL","DZA":"DZ","AND":"AD","AGO":"AO","ATG":"AG","ARG":"AR",
+    "ARM":"AM","AUS":"AU","AUT":"AT","AZE":"AZ","BHS":"BS","BHR":"BH","BGD":"BD",
+    "BRB":"BB","BLR":"BY","BEL":"BE","BLZ":"BZ","BEN":"BJ","BTN":"BT","BOL":"BO",
+    "BIH":"BA","BWA":"BW","BRA":"BR","BRN":"BN","BGR":"BG","BFA":"BF","BDI":"BI",
+    "KHM":"KH","CMR":"CM","CAN":"CA","CPV":"CV","CAF":"CF","TCD":"TD","CHL":"CL",
+    "CHN":"CN","COL":"CO","COM":"KM","COG":"CG","COD":"CD","CRI":"CR","CIV":"CI",
+    "HRV":"HR","CUB":"CU","CYP":"CY","CZE":"CZ","DNK":"DK","DJI":"DJ","DMA":"DM",
+    "DOM":"DO","ECU":"EC","EGY":"EG","SLV":"SV","GNQ":"GQ","ERI":"ER","EST":"EE",
+    "ETH":"ET","FJI":"FJ","FIN":"FI","FRA":"FR","GAB":"GA","GMB":"GM","GEO":"GE",
+    "DEU":"DE","GHA":"GH","GRC":"GR","GRD":"GD","GTM":"GT","GIN":"GN","GNB":"GW",
+    "GUY":"GY","HTI":"HT","HND":"HN","HUN":"HU","ISL":"IS","IND":"IN","IDN":"ID",
+    "IRN":"IR","IRQ":"IQ","IRL":"IE","ISR":"IL","ITA":"IT","JAM":"JM","JPN":"JP",
+    "JOR":"JO","KAZ":"KZ","KEN":"KE","KIR":"KI","PRK":"KP","KOR":"KR","KWT":"KW",
+    "KGZ":"KG","LAO":"LA","LVA":"LV","LBN":"LB","LSO":"LS","LBR":"LR","LBY":"LY",
+    "LIE":"LI","LTU":"LT","LUX":"LU","MKD":"MK","MDG":"MG","MWI":"MW","MYS":"MY",
+    "MDV":"MV","MLI":"ML","MLT":"MT","MHL":"MH","MRT":"MR","MUS":"MU","MEX":"MX",
+    "FSM":"FM","MDA":"MD","MCO":"MC","MNG":"MN","MNE":"ME","MAR":"MA","MOZ":"MZ",
+    "MMR":"MM","NAM":"NA","NRU":"NR","NPL":"NP","NLD":"NL","NZL":"NZ","NIC":"NI",
+    "NER":"NE","NGA":"NG","NOR":"NO","OMN":"OM","PAK":"PK","PLW":"PW","PAN":"PA",
+    "PNG":"PG","PRY":"PY","PER":"PE","PHL":"PH","POL":"PL","PRT":"PT","QAT":"QA",
+    "ROU":"RO","RUS":"RU","RWA":"RW","KNA":"KN","LCA":"LC","VCT":"VC","WSM":"WS",
+    "SMR":"SM","STP":"ST","SAU":"SA","SEN":"SN","SRB":"RS","SYC":"SC","SLE":"SL",
+    "SGP":"SG","SVK":"SK","SVN":"SI","SLB":"SB","SOM":"SO","ZAF":"ZA","ESP":"ES",
+    "LKA":"LK","SDN":"SD","SUR":"SR","SWZ":"SZ","SWE":"SE","CHE":"CH","SYR":"SY",
+    "TWN":"TW","TJK":"TJ","TZA":"TZ","THA":"TH","TLS":"TL","TGO":"TG","TON":"TO",
+    "TTO":"TT","TUN":"TN","TUR":"TR","TKM":"TM","TUV":"TV","UGA":"UG","UKR":"UA",
+    "ARE":"AE","GBR":"GB","USA":"US","URY":"UY","UZB":"UZ","VUT":"VU","VEN":"VE",
+    "VNM":"VN","YEM":"YE","ZMB":"ZM","ZWE":"ZW","SSD":"SS","PSE":"PS","XKX":"XK",
+    "-99":"",
+};
+
+function getAlpha2(feature) {
+    // Try converting Alpha-3 id to Alpha-2
+    const a3 = feature.id || "";
+    if (A3_TO_A2[a3]) return A3_TO_A2[a3];
+    // Fallback: check properties
+    return feature.properties?.ISO_A2 || a3;
+}
 
 // ── Color scale based on movie count ─────────────────
 
@@ -21,11 +64,11 @@ function getColor(count) {
     if (count > 100)   return "#9fa8da";
     if (count > 10)    return "#c5cae9";
     if (count > 0)     return "#e8eaf6";
-    return "#1a1d27";  // no movies
+    return "#1a1d27";
 }
 
 function style(feature) {
-    const code = feature.properties.ISO_A2;
+    const code = getAlpha2(feature);
     const count = countryData[code] || 0;
     return {
         fillColor: getColor(count),
@@ -39,8 +82,8 @@ function style(feature) {
 // ── Interaction ──────────────────────────────────────
 
 function onEachFeature(feature, layer) {
-    const code = feature.properties.ISO_A2;
-    const name = feature.properties.ADMIN || feature.properties.NAME || code;
+    const code = getAlpha2(feature);
+    const name = feature.properties.name || feature.properties.ADMIN || code;
     const count = countryData[code] || 0;
 
     layer.bindTooltip(`<strong>${name}</strong><br/>${count.toLocaleString()} movies`, {
@@ -54,7 +97,6 @@ function onEachFeature(feature, layer) {
             `<strong>${name} (${code})</strong> — ${count.toLocaleString()} movies. ` +
             `<a href="#" id="countryFilterLink">Search movies from ${name}</a>`;
 
-        // When the user clicks "Search movies from X", filter the search
         document.getElementById("countryFilterLink").addEventListener("click", (e) => {
             e.preventDefault();
             filterByCountry(code, name);
@@ -78,7 +120,6 @@ async function filterByCountry(countryCode, countryName) {
     const topK = parseInt(document.getElementById("topK").value, 10);
     const indexType = document.querySelector('input[name="indexType"]:checked').value;
 
-    // Switch to results tab
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
     document.querySelector('[data-tab="results"]').classList.add("active");
@@ -112,7 +153,6 @@ async function filterByCountry(countryCode, countryName) {
         } else {
             resultsContainer.innerHTML = data.results
                 .map((r, i) => {
-                    // Reuse renderCard from app.js (it's global)
                     return typeof renderCard === "function"
                         ? renderCard(r, i + 1)
                         : `<div class="result-card"><p>${r.title}</p></div>`;
@@ -128,7 +168,7 @@ async function filterByCountry(countryCode, countryName) {
 // ── Initialize map ───────────────────────────────────
 
 function initMap() {
-    if (map) return;  // already initialized
+    if (map) return;
 
     map = L.map("mapContainer", {
         center: [20, 0],
@@ -138,7 +178,6 @@ function initMap() {
         worldCopyJump: true,
     });
 
-    // Dark tile layer to match the UI theme
     L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
         {
@@ -158,8 +197,8 @@ async function loadMap() {
 
     initMap();
 
+    // 1) Fetch movie counts from our API
     try {
-        // 1) Fetch movie counts from our API
         const countResp = await fetch("/api/countries");
         if (countResp.ok) {
             const countJson = await countResp.json();
@@ -167,10 +206,9 @@ async function loadMap() {
             for (const c of countJson.countries) {
                 countryData[c.country_code] = c.count;
             }
-            statusEl.textContent = `Loaded ${Object.keys(countryData).length} countries from index.`;
+            statusEl.textContent = `Loaded ${Object.keys(countryData).length} countries.`;
         } else {
-            // If ES is unavailable, still show the map with no data
-            statusEl.textContent = "Could not load country data (ES unavailable). Map shown without data.";
+            statusEl.textContent = "Could not load country data. Map shown without data.";
         }
     } catch {
         statusEl.textContent = "Could not connect to backend. Showing empty map.";
@@ -180,6 +218,11 @@ async function loadMap() {
     try {
         statusEl.textContent += " Loading map boundaries…";
         const geoResp = await fetch(GEOJSON_URL);
+
+        if (!geoResp.ok) {
+            throw new Error(`GeoJSON fetch failed: ${geoResp.status}`);
+        }
+
         const geoJson = await geoResp.json();
 
         if (geoLayer) {
@@ -191,12 +234,19 @@ async function loadMap() {
             onEachFeature: onEachFeature,
         }).addTo(map);
 
-        statusEl.textContent = `Map ready — ${Object.keys(countryData).length} countries with data.`;
+        // Count matches
+        let matched = 0;
+        geoJson.features.forEach(f => {
+            const code = getAlpha2(f);
+            if (countryData[code]) matched++;
+        });
 
-        // Add a legend
+        statusEl.textContent = `Map ready — ${matched} of ${geoJson.features.length} countries matched with movie data.`;
+
         addLegend();
     } catch (err) {
-        statusEl.textContent = "Failed to load GeoJSON: " + err.message;
+        console.error("[map] GeoJSON error:", err);
+        statusEl.textContent = "Failed to load map boundaries: " + err.message;
     }
 }
 
@@ -204,7 +254,6 @@ async function loadMap() {
 // ── Legend ────────────────────────────────────────────
 
 function addLegend() {
-    // Remove existing legend if any
     const existing = document.querySelector(".map-legend");
     if (existing) existing.remove();
 
