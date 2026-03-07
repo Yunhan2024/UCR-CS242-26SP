@@ -21,6 +21,8 @@ data/posters/
 data/crawl_stats.json
 data/poster_stats.json
 data/__MACOSX/
+APP/models/movie_faiss.index
+APP/models/movie_metadata.pkl
 *.zip
 
 # Keep sample data
