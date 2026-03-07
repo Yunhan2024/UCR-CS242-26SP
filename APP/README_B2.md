@@ -131,9 +131,19 @@ python app.py
 # Visit http://localhost:5000
 ```
 
-The first BERT search takes ~15 seconds (model loading). After that, each search is <100ms.
+BERT model and FAISS index preload at startup (~15 seconds). After that, both ES and BERT searches respond in under 1 second.
 
 If Elasticsearch is not running, BERT search still works (and vice versa). The unavailable mode shows a friendly error message.
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| BERT segfault on macOS | Pin `faiss-cpu==1.7.4`, ensure `numpy<2`. The `requirements.txt` already handles this. |
+| `PyTorch >= 2.4 required` | Downgrade transformers: `pip install "transformers<4.46"` |
+| ES "index not found" | Build the index first (Step 2), then `curl -X POST http://localhost:5000/api/reload` |
+| BERT "Failed to fetch" in browser | BERT crashed during search. Check terminal for errors. Restart `python app.py`. |
+| Map shows 0 countries matched | ES index was built without `origin_country`. Rebuild using `APP/build_es_index.py` with `--recreate-index`. |
 
 ---
 
