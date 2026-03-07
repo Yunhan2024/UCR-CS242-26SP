@@ -15,7 +15,7 @@ This project builds a search engine using data crawled from TMDB (The Movie Data
 | Metric | Value |
 |--------|-------|
 | Movies | 221,645 |
-| Total Size | 1.09 GB raw JSON |
+| Total Size | 1.09 GB |
 
 Each movie record includes: title, overview, tagline, release date, runtime, genres, cast (top 20), crew (key roles), user reviews (up to 10), ratings, popularity, budget, revenue, origin country, production countries, and more.
 
@@ -23,22 +23,7 @@ Each movie record includes: title, overview, tagline, release date, runtime, gen
 
 ```
 UCR-CS242-26SP/
-├── tmdb_crawler/                   # Part A1: Scrapy crawler
-│   └── tmdb_crawler/
-│       ├── items.py                # MovieItem data model
-│       ├── settings.py             # API keys, rate limits, pipelines
-│       ├── pipelines.py            # Dedup filter, JSON storage, stats
-│       └── spiders/
-│           ├── discover_spider.py  # Phase 1: Collect movie IDs
-│           └── details_spider.py   # Phase 2: Fetch full details
-├── a2_index/                       # Part A2: Elasticsearch indexing
-│   ├── build_es_index.py           # Core indexing pipeline
-│   ├── benchmark_runtime.py        # Runtime benchmark utility
-│   ├── requirements-index.txt
-│   └── README_A2.md
-├── bert/                           # Part B1: BERT dense indexing
-│   ├── CS242_BERT_Indexing.ipynb   # Colab notebook for building FAISS index
-│   ├── README_BERT.md              # Detailed B1 docs
+├── .claude/                        # Claude Code config
 ├── APP/                            # Part B2: Web application
 │   ├── app.py                      # Flask web server
 │   ├── config.py                   # Central configuration
@@ -46,7 +31,8 @@ UCR-CS242-26SP/
 │   ├── bert_search.py              # BERT + FAISS query module
 │   ├── build_es_index.py           # ES indexer (with origin_country field)
 │   ├── requirements.txt
-│   ├── README_B2.md                # Detailed setup & architecture docs
+│   ├── README.md                   # Detailed setup & troubleshooting
+│   ├── .gitignore
 │   ├── models/                     # BERT index files (not in git)
 │   │   ├── movie_faiss.index
 │   │   └── movie_metadata.pkl
@@ -57,11 +43,47 @@ UCR-CS242-26SP/
 │       └── js/
 │           ├── app.js              # Search & comparison logic
 │           └── map.js              # World map (Leaflet.js)
+├── a2_index/                       # Part A2: Elasticsearch indexing
+│   ├── build_es_index.py           # Core indexing pipeline
+│   ├── benchmark_runtime.py        # Runtime benchmark utility
+│   ├── requirements-index.txt
+│   └── README_A2.md
+├── bert/                           # Part B1: BERT dense indexing
+│   ├── CS242_BERT_Indexing.ipynb   # Colab notebook for building FAISS index
+│   ├── README_BERT.md              # BERT indexing documentation
+│   └── index_time_comparison.csv   # ES vs BERT indexing time comparison
 ├── data/
-│   ├── movie_ids.jsonl             # Discovered movie IDs
-│   └── movies/                     # Individual movie JSON files (221k+)
-└── docker-compose.yml              # (optional) Elasticsearch via Docker
+│   └── samples/                    # Sample data files
+├── tmdb_crawler/                   # Part A1: Scrapy crawler
+│   └── tmdb_crawler/
+│       ├── items.py                # MovieItem data model
+│       ├── settings.py             # API keys, rate limits, pipelines
+│       ├── pipelines.py            # Dedup filter, JSON storage, stats
+│       └── spiders/
+│           ├── discover_spider.py  # Phase 1: Collect movie IDs
+│           └── details_spider.py   # Phase 2: Fetch full details
+├── .gitignore
+├── README.md                       # This file
+├── crawler.bat                     # Windows crawler script
+├── crawler.sh                      # Unix crawler script
+├── indexbuilder.sh                 # ES index builder script (Part A2)
+└── start_app.sh                    # One-click web app launcher
 ```
+
+---
+
+## Quick Start
+
+To launch the full search engine from the project root:
+
+```bash
+chmod +x start_app.sh
+./start_app.sh
+```
+
+The script automatically checks all prerequisites (Python, crawled data in `data/movies/`, BERT files in `APP/models/`), installs dependencies, starts Elasticsearch via Docker if not already running, builds the ES index if it doesn't exist yet, and launches the Flask web app. Visit `http://localhost:5000` once the server starts.
+
+For manual setup or troubleshooting, see `APP/README.md`.
 
 ---
 
@@ -175,29 +197,39 @@ Place both in `APP/models/`.
 
 ### Reproduce (if needed)
 
-Open `bert/CS242_BERT_Indexing.ipynb` in Google Colab with GPU runtime, upload and unzip the crawled data, run all cells (~30–40 min on T4 GPU).
+Open `bert/CS242_BERT_Indexing.ipynb` in Google Colab with GPU runtime, upload and unzip the crawled data, run all cells (~30–40 min on T4 GPU). For detailed documentation, see `bert/README_BERT.md`. For indexing time comparison between ES and BERT, see `bert/index_time_comparison.csv`.
 
 ---
 
 ## Part B2: Web Application
 
-See `APP/README.md` for detailed architecture, file breakdown, setup instructions, and Elasticsearch installation guide.
+### What it does
 
-### Quick start
+A Flask web app that provides a unified search interface for both the Elasticsearch (sparse) and BERT + FAISS (dense) indexes, plus a world map visualization of movie origins by country.
 
-```bash
-# 1. Start Elasticsearch (Docker recommended)
-docker run -d --name elasticsearch -p 9200:9200 \
-  -e "discovery.type=single-node" \
-  -e "xpack.security.enabled=false" \
-  docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+### Why
 
-# 2. Build ES index (one-time), place BERT files in APP/models/
-# 3. Run the web app
-pip install -r APP/requirements.txt
-cd APP && python app.py
-# Visit http://localhost:5000
+Parts A and B1 create the indexes, but they have no user interface. The web app lets users input a query, choose an index, and see ranked results. The Compare tab runs the same query on both indexes side by side — this directly supports the Part B report requirement of comparing ranking quality between sparse and dense retrieval. The world map uses the `origin_country` field to visualize global movie production patterns and lets users explore movies by clicking a country.
+
+### Architecture
+
 ```
+Browser → Flask (app.py) → es_search.py  → Elasticsearch (port 9200)
+                         → bert_search.py → FAISS index + movie_metadata.pkl
+```
+
+ES search uses `multi_match` across title (3x boost), overview (2x), cast_names (1.5x), crew_names, and all_text with fuzzy matching. BERT search encodes the query into a 384-dim vector, searches the FAISS index by L2 distance, and converts distances to similarity scores via `1/(1+distance)`. Both return results in an identical JSON format so the frontend renders them without branching.
+
+### Features
+
+- **Dual-index search**: Toggle between Elasticsearch (keyword matching) and BERT + FAISS (semantic matching)
+- **Side-by-side comparison**: Run the same query on both indexes to compare ranking quality
+- **World map**: Leaflet.js choropleth colored by origin country; click a country to filter results
+- **Search timing**: Displays query execution time in milliseconds for both indexes
+- **External links**: Each result links to IMDb and TMDB pages
+- **Graceful degradation**: If ES or BERT is unavailable, the other still works
+
+For detailed architecture diagrams, request flow, file breakdown, and troubleshooting, see `APP/README.md`.
 
 ---
 
