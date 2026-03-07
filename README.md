@@ -1,11 +1,11 @@
 # UCR 2026 Spring CS242 - TMDB Search Engine
 
-A search engine for movie data using PyLucene and BERT, built for CS242 course project.
+A search engine for movie data using Elasticsearch (sparse retrieval) and BERT (dense retrieval), built for CS242 course project.
 
 ## Project Overview
 
 This project builds a search engine using data crawled from TMDB (The Movie Database):
-- **Part A**: Scrapy crawler to collect 500+ MB of movie data, PyLucene index
+- **Part A**: Scrapy crawler to collect 500+ MB of movie data, Elasticsearch index
 - **Part B**: BERT embeddings with FAISS index
 - **Web App**: Query interface supporting both index types
 

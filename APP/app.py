@@ -99,7 +99,7 @@ def api_search():
         module = _get_bert_module()
         if module is None:
             return jsonify({"error": "BERT/FAISS index is not available. "
-                            "Make sure movie_faiss.index and movie_metadata.pkl exist in backend/models/."}), 503
+                            "Make sure movie_faiss.index and movie_metadata.pkl exist in APP/models/."}), 503
         results = module.search(query, top_k=top_k, country_filter=country)
     else:
         module = _get_es_module()

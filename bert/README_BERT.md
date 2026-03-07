@@ -42,7 +42,7 @@ The model `sentence-transformers/all-MiniLM-L6-v2` processes each text passage:
 
 1. The **tokenizer** splits the text into sub-word tokens (BERT uses WordPiece tokenization, not simple whitespace splitting). For example, "intergalactic" might become `["inter", "##gal", "##actic"]`.
 
-2. BERT accepts up to **512 tokens**. If a passage is shorter, it pads with zeros; if longer, it truncates. Most movie passages fit within this limit.
+2. BERT accepts up to **512 tokens**. In our indexing code we explicitly set `max_length=512` with `truncation=True` and `padding=True`. If a passage is shorter, it is padded; if longer, it is truncated.
 
 3. The **model** processes these tokens through 6 transformer encoder layers, producing a `[512, 384]` tensor — a 384-dimensional vector for each of the 512 token positions.
 
@@ -75,6 +75,7 @@ The FAISS index is saved to `movie_faiss.index`, and the metadata list is saved 
 | `CS242_BERT_Indexing.ipynb` | Jupyter notebook that builds the index (run on Google Colab with GPU) |
 | `movie_faiss.index` | Output: FAISS vector index (~320 MB) |
 | `movie_metadata.pkl` | Output: Metadata list aligned with FAISS positions (~150 MB) |
+| `index_time_comparison.csv` | Runtime comparison table for BERT vs Elasticsearch indexing |
 
 ### Metadata Schema (each entry in the list)
 
@@ -104,7 +105,20 @@ The FAISS index is saved to `movie_faiss.index`, and the metadata list is saved 
 4. Update `DATASET_PATH` to point to your unzipped data
 5. Run all cells — takes approximately 30-40 minutes on a T4 GPU
 6. Download `movie_faiss.index` and `movie_metadata.pkl`
-7. Place both files in `backend/models/`
+7. Place both files in `APP/models/`
+
+---
+
+## Indexing Time Comparison (BERT vs Elasticsearch)
+
+To satisfy Part B1, we record BERT indexing time and compare it with sparse indexing time from Part A2.
+
+| Index Type | Corpus Size | Runtime (seconds) | Source |
+|---|---:|---:|---|
+| BERT + FAISS | 220,015 movies | 722.34 | `bert/CS242_BERT_Indexing.ipynb` output (`BERT Indexing Time`) |
+| Elasticsearch (sparse baseline) | 220,015 movies | 1333.05 | `a2_index/reports/index_report_tmdb_s3_20260304.json` (`duration_sec`) |
+
+Interpretation: for this experiment, dense indexing finished faster than sparse indexing. However, the two runs were executed on different environments (Colab GPU for BERT vs local/server CPU for Elasticsearch), so this comparison should be interpreted as an empirical project result rather than a strict hardware-controlled benchmark.
 
 ---
 

@@ -122,18 +122,18 @@ It uses `fuzziness: AUTO` so minor typos still return results. The `get_country_
 
 - Python 3.8+
 - Elasticsearch 8.x running on `localhost:9200`
-- `movie_faiss.index` and `movie_metadata.pkl` in `backend/models/`
+- `movie_faiss.index` and `movie_metadata.pkl` in `APP/models/`
 
 ### Setup
 
 ```bash
+cd APP
 pip install -r requirements.txt
 ```
 
 ### Start the server
 
 ```bash
-cd backend
 python app.py
 ```
 
